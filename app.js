@@ -6,11 +6,13 @@ const path = require('path')
 const mongoose = require('mongoose')
 const ejsMate = require('ejs-mate')
 const Joi = require('joi')
-const {campgroundSchema} = require('./schemas.js')
+const {campgroundSchema, reviewSchema} = require('./schemas.js')
 const catchAsync = require('./utilis/catchAsync')
 const ExpressError = require('./utilis/ExpressError')
 const methodOverride = require('method-override')
 const Campground = require('./models/campground')
+const Review = require('./models/review')
+
 const {
     error
 } = require('console')
@@ -38,6 +40,19 @@ const validateCampground = (req, res, next) => {
     // we create one file with name schemas and save the Joi schema in this
 
     const {error} = campgroundSchema.validate(req.body)
+    console.log(JSON.stringify(error))
+    if (error) {
+        const msg = error.details.map(el => el.message).join(',')
+        throw new ExpressError(msg, 400)
+    } else{
+        next()
+    }
+}
+
+const validateReview = (req, res, next) => {
+    // we create one file with name schemas and save the Joi schema in this
+
+    const {error} = reviewSchema.validate(req.body)
     console.log(JSON.stringify(error))
     if (error) {
         const msg = error.details.map(el => el.message).join(',')
@@ -88,6 +103,8 @@ app.get('/campgrounds/new', (req, res) => {
 
 // it means validateCampground run firstly§
 app.post('/campgrounds', validateCampground, catchAsync(async (req, res, next) => {
+
+    console.log('===========================')
     // we create one ExpressError for can not store data which you create without name, value are required
     //if(!req.body.campground) throw new ExpressError('Invalid Campground Data', 400) However, it is basic!
 
@@ -107,7 +124,8 @@ app.get('/campgrounds/:id', catchAsync(async (req, res, next) => {
         id
     } = req.params
     // to match id and find the correct db
-    const campground = await Campground.findById(id)
+    const campground = await Campground.findById(id).populate('reviews')
+    // console.log(campground)
     res.render('campgrounds/show', {
         campground
     })
@@ -140,6 +158,25 @@ app.delete('/campgrounds/:id', catchAsync(async (req, res, next) => {
     } = req.params
     await Campground.findByIdAndDelete(id)
     res.redirect('/campgrounds')
+}))
+
+app.post('/campgrounds/:id/reviews', validateReview, catchAsync(async(req,res)=>{
+    const campground = await Campground.findById(req.params.id)
+    const review = new Review(req.body.review) // see more in show file!
+    campground.reviews.push(review) 
+    await review.save()
+    await campground.save()
+    res.redirect(`/campgrounds/${campground._id}`)
+}))
+
+app.delete('/campgrounds/:id/reviews/:reviewId', catchAsync(async(req,res)=>{
+    // res.send(req.params)
+
+    const {id, reviewId} = req.params
+    console.log(id)
+    await Campground.findByIdAndUpdate(id, {$pull: {reviews: reviewId}}) // $pull will remove all reviews have reviewId
+    await Review.findByIdAndDelete(reviewId)
+    res.redirect(`/campgrounds/${id}`)
 }))
 
 // app.all('*', call back func) means if nothing matchs other above, it will run this code

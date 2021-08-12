@@ -6,20 +6,24 @@ const path = require('path')
 const mongoose = require('mongoose')
 const ejsMate = require('ejs-mate')
 const Joi = require('joi')
-const {campgroundSchema, reviewSchema} = require('./schemas.js')
-const catchAsync = require('./utilis/catchAsync')
+// const {campgroundSchema, reviewSchema} = require('./schemas.js')
+// const catchAsync = require('./utilis/catchAsync')
 const ExpressError = require('./utilis/ExpressError')
 const methodOverride = require('method-override')
-const Campground = require('./models/campground')
-const Review = require('./models/review')
+// const Campground = require('./models/campground')
+// const Review = require('./models/review')
+const session = require('express-session')
+const flash = require('connect-flash')
+const campgrounds = require('./Routes/campground')
+const reviews = require('./Routes/review')
 
-const {
-    error
-} = require('console')
+// const {error} = require('console')
 mongoose.connect('mongodb://localhost:27017/yelp-camp', {
     useNewUrlParser: true,
     useCreateIndex: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
+    // mongoose complain! if any
+    useFindAndModify: false
 })
 //short word
 const db = mongoose.connection
@@ -34,51 +38,68 @@ app.engine('ejs', ejsMate)
 app.set('view engine', 'ejs')
 // remmember 'views' different from 'view'
 app.set('views', path.join(__dirname, 'view'))
-
 // we create one seprerate function that can help Joi object
-const validateCampground = (req, res, next) => {
-    // we create one file with name schemas and save the Joi schema in this
+// const validateCampground = (req, res, next) => {
+//     // we create one file with name schemas and save the Joi schema in this
+//     const {error} = campgroundSchema.validate(req.body)
+//     console.log(JSON.stringify(error))
+//     if (error) {
+//         const msg = error.details.map(el => el.message).join(',')
+//         throw new ExpressError(msg, 400)
+//     } else{
+//         next()
+//     }
+// }
+// const validateReview = (req, res, next) => {
+//     // we create one file with name schemas and save the Joi schema in this
 
-    const {error} = campgroundSchema.validate(req.body)
-    console.log(JSON.stringify(error))
-    if (error) {
-        const msg = error.details.map(el => el.message).join(',')
-        throw new ExpressError(msg, 400)
-    } else{
-        next()
-    }
-}
-
-const validateReview = (req, res, next) => {
-    // we create one file with name schemas and save the Joi schema in this
-
-    const {error} = reviewSchema.validate(req.body)
-    console.log(JSON.stringify(error))
-    if (error) {
-        const msg = error.details.map(el => el.message).join(',')
-        throw new ExpressError(msg, 400)
-    } else{
-        next()
-    }
-}
-
+//     const {error} = reviewSchema.validate(req.body)
+//     console.log(JSON.stringify(error))
+//     if (error) {
+//         const msg = error.details.map(el => el.message).join(',')
+//         throw new ExpressError(msg, 400)
+//     } else{
+//         next()
+//     }
+// }
 //This one helps parse information after submit/create new campground to db
 app.use(express.urlencoded({
     extended: true
 }))
 // this allows you can oveerride method 
 app.use(methodOverride('_method'))
-
+//use the following code to serve images, CSS files, and JavaScript files in a directory named public
+app.use(express.static(path.join(__dirname,'public')))
+app.use(session({
+    secret: 'thisisasecret',
+    resave: false,
+    saveUninitialized: true,
+    cookie:{
+        httpOnly: true,
+        expires: Date.now() + 1000 * 60 * 60 * 24 * 7, 
+        maxAge : 1000 * 60 * 60 * 24 * 7 // a week
+    }
+}))
+app.use(flash())
 // app.use('/campgrounds', (req,res,next)=>{
 //     console.log('AAAAAAA')
 //     let h = 4
 //     next(h)
 // })
 
+// made a middleware before run code below 'router capground and review'
+app.use((req,res,next)=>{
+    res.locals.message = req.flash('success')
+    res.locals.error = req.flash('error')
+    next()
+})
+
+app.use('/campgrounds', campgrounds)
+app.use('/campgrounds/:id/reviews', reviews)
+
 app.get('/', (req, res) => {
     res.render('home')
 })
-
 // app.get('/makeCampground', async (req,res)=>{
 //     const camp = new Campground({
 //         title: 'My backyard',
@@ -88,116 +109,17 @@ app.get('/', (req, res) => {
 //     res.send(camp)
 // })
 
-app.get('/campgrounds', catchAsync(async (req, res, next) => {
-    // go to mongodb to find Campground collection
-
-    const campgrounds = await Campground.find({})
-    res.render('campgrounds/index', {
-        campgrounds
-    })
-
-}))
-app.get('/campgrounds/new', (req, res) => {
-    res.render('campgrounds/new')
-})
-
-// it means validateCampground run firstly§
-app.post('/campgrounds', validateCampground, catchAsync(async (req, res, next) => {
-
-    console.log('===========================')
-    // we create one ExpressError for can not store data which you create without name, value are required
-    //if(!req.body.campground) throw new ExpressError('Invalid Campground Data', 400) However, it is basic!
-
-
-    //try {
-    // after create a new campground on application, we post it and create a new Campground and save
-    const campground = new Campground(req.body.campground)
-    await campground.save()
-    res.redirect(`/campgrounds/${campground._id}`)
-    // } catch (e) {
-    //     next(e)
-    // }
-}))
-
-app.get('/campgrounds/:id', catchAsync(async (req, res, next) => {
-    const {
-        id
-    } = req.params
-    // to match id and find the correct db
-    const campground = await Campground.findById(id).populate('reviews')
-    // console.log(campground)
-    res.render('campgrounds/show', {
-        campground
-    })
-}))
-
-app.get('/campgrounds/:id/edit', catchAsync(async (req, res, next) => {
-    const {
-        id
-    } = req.params
-    const campground = await Campground.findById(id)
-    res.render('campgrounds/edit', {
-        campground
-    })
-}))
-
-app.put('/campgrounds/:id', validateCampground,catchAsync(async (req, res, next) => {
-    const {
-        id
-    } = req.params
-    const campground = await Campground.findByIdAndUpdate(id, {
-        ...req.body.campground
-    })
-    res.redirect(`/campgrounds/${campground._id}`)
-
-}))
-
-app.delete('/campgrounds/:id', catchAsync(async (req, res, next) => {
-    const {
-        id
-    } = req.params
-    await Campground.findByIdAndDelete(id)
-    res.redirect('/campgrounds')
-}))
-
-app.post('/campgrounds/:id/reviews', validateReview, catchAsync(async(req,res)=>{
-    const campground = await Campground.findById(req.params.id)
-    const review = new Review(req.body.review) // see more in show file!
-    campground.reviews.push(review) 
-    await review.save()
-    await campground.save()
-    res.redirect(`/campgrounds/${campground._id}`)
-}))
-
-app.delete('/campgrounds/:id/reviews/:reviewId', catchAsync(async(req,res)=>{
-    // res.send(req.params)
-
-    const {id, reviewId} = req.params
-    console.log(id)
-    await Campground.findByIdAndUpdate(id, {$pull: {reviews: reviewId}}) // $pull will remove all reviews have reviewId
-    await Review.findByIdAndDelete(reviewId)
-    res.redirect(`/campgrounds/${id}`)
-}))
-
 // app.all('*', call back func) means if nothing matchs other above, it will run this code
 app.all('*', (req, res, next) => {
     //we required ExpressError, so we can use this to custom our Error
     // however, it is not working because we use next() so it runs the next middleware, so we should custom the next middleware with default value
     next(new ExpressError('NOT FOUND!!!', 404))
 })
-
-
-
 app.use((err, req, res, next) => {
-    const {
-        status = 500
-    } = err
+    const {status = 500} = err
     if (!err.message) err.message = 'Oh! Something went wrong!!!'
-    res.status(status).render('error', {
-        err
-    })
+    res.status(status).render('error', {err})
 })
-
 app.use((req, res, next, error) => {
     console.log('error middleware')
     res.end()

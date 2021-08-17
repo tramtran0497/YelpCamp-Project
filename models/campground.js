@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 // making it short. we can se Schema instead of mongoose.Schema
 const Schema = mongoose.Schema
 const Review = require('./review')
+const User = require('./user')
 
 //create a Schema
 const campgroundSchema = new Schema({
@@ -10,6 +11,10 @@ const campgroundSchema = new Schema({
     price: Number,
     description: String,
     location: String,
+    author: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    },
     reviews:[{
         type: Schema.Types.ObjectId, 
         ref: 'Review'

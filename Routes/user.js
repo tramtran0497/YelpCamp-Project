@@ -45,10 +45,15 @@ router.post('/login', passport.authenticate('local', {
     failureRedirect: '/login'
 }), async (req, res) => {
     req.flash('success', 'Welcome back!')
+    // if(req.session.)
     // we must know where user is before asking log in
-    const requestUrl = req.session.returnTo || '/campgrounds' //if they click login firstly
+    const requestUrl = req.session.retunTo || '/campgrounds' //if they click login firstly
     // delete helps us to delete the url where you stay before asking login, then it is new, refresh!
     delete req.session.returnTo
+    // console.log('-------------------')
+    // console.log(requestUrl)
+    // console.log(req.query)
+    // console.log('-------------------')
     res.redirect(requestUrl)
 })
 

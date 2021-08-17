@@ -8,6 +8,10 @@ const userSchema = new Schema({
         required: true,
         // email must be unique!! not the same whatever other emails
         unique: true
+    },
+    username: {
+        type: String,
+        required: true
     }
 })
 //First you need to plugin Passport-Local Mongoose into your User schema

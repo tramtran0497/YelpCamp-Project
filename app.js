@@ -14,8 +14,15 @@ const methodOverride = require('method-override')
 // const Review = require('./models/review')
 const session = require('express-session')
 const flash = require('connect-flash')
+const passport = require('passport')
+const LocalStrategy = require('passport-local')
+//Routers
 const campgrounds = require('./Routes/campground')
 const reviews = require('./Routes/review')
+const users = require('./Routes/user')
+// requires the model with Passport-Local Mongoose plugged in
+const User = require('./models/user')
+
 
 // const {error} = require('console')
 mongoose.connect('mongodb://localhost:27017/yelp-camp', {
@@ -87,15 +94,43 @@ app.use(flash())
 //     next(h)
 // })
 
-// made a middleware before run code below 'router capground and review'
+//In a Connect or Express-based application, passport.initialize() middleware is required to initialize Passport. If your application uses persistent login sessions, passport.session() middleware must also be used.
+app.use(passport.initialize())
+//be sure to use session() before passport.session() to ensure that the login session is restored in the correct order.
+app.use(passport.session())
+// use static authenticate method of model in LocalStrategy
+// actually, we have not never made the method authenticate(), passport/passport-local/passport-local-mongoose do it
+passport.use(new LocalStrategy(User.authenticate()));
+// use static serialize and deserialize of model for passport session support
+// it means storage and unstorage db
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+// made a middleware before run code below 'router campground and review'
 app.use((req,res,next)=>{
-    res.locals.message = req.flash('success')
+    console.log(req.session)
+    // REMEMBER! these variables is used in Views file
+    res.locals.currentUser = req.user
+    res.locals.message = req.flash('success') // when we use message variable, it is understood that req.flash('success')
     res.locals.error = req.flash('error')
     next()
 })
 
+// example!!
+// app.get('/fake', async(req,res)=>{
+//     // make new User without password, like User model
+//     const user = new User({
+//         email: 'tram@gmail.com',
+//         username: 'tram'
+//     })
+//     //register(user, password, cb) Convenience method to register a new user instance with a given password. Checks if username is unique. 
+//     const newUser = await User.register(user, 'tram')
+//     console.log(newUser)
+// })
+
 app.use('/campgrounds', campgrounds)
 app.use('/campgrounds/:id/reviews', reviews)
+app.use('/',users)
 
 app.get('/', (req, res) => {
     res.render('home')

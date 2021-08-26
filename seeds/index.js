@@ -37,9 +37,21 @@ const seedDB = async () =>{
             // in array cities, position 'random1000' and take keys 'city' and 'state'
             location: `${cities[random1000].city}, ${cities[random1000].state}`,
             title: `${sample(descriptors)} ${sample(places)}`,
-            image: 'https://source.unsplash.com/collection/483251',
             description: 'Beautiful Places',
-            price
+            price,
+            geometry:{
+                coordinates:[106.63333,10.81667],
+                type:"Point"},
+            image: [
+                {
+                    url: 'https://res.cloudinary.com/tramtran0497/image/upload/v1629840026/Yelp-Camp/txuyrd9j5uzxiopxaeqc.jpg',
+                    filename: 'Yelp-Camp/wek8qzwbwhbotbefmeki'
+                },
+                {
+                    url: 'https://res.cloudinary.com/tramtran0497/image/upload/v1629841381/Yelp-Camp/y859jmaitbxsxghwl9ij.jpg',
+                    filename: 'Yelp-Camp/gof1zn9k4gvxmfuuxso4'
+                }
+            ]
         })
         await camp.save()
     }

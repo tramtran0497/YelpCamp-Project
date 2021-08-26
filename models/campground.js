@@ -4,10 +4,31 @@ const Schema = mongoose.Schema
 const Review = require('./review')
 const User = require('./user')
 
+//in order to make picture more beautiful, we create one schemaImage
+const imgSchema = new Schema({
+    url: String,
+    filename: String
+})
+// if you wanna know should search schema.virtual
+imgSchema.virtual('thumbnail').get(function(){
+    return this.url.replace('/upload', '/upload/w_200')
+})
+
 //create a Schema
 const campgroundSchema = new Schema({
     title: String,
-    image: String,
+    image: [imgSchema],
+    geometry:{
+        type: {
+            type: String, 
+            enum: ['Point'], 
+            required: true
+          },
+        coordinates: {
+            type: [Number],
+            required:true
+        }
+    },
     price: Number,
     description: String,
     location: String,

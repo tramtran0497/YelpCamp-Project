@@ -1,3 +1,10 @@
+
+if(process.env.NODE_ENV !== 'production'){
+    require('dotenv').config()
+    // console.log("===============>",process.env.NODE_ENV)
+    //I just know that we do not use it every time we run, we just use some neseccery
+}
+// console.log("--------------->",process.env.SECRET)
 // after install express
 const express = require('express')
 // to conect to the link below
@@ -108,7 +115,7 @@ passport.deserializeUser(User.deserializeUser());
 
 // made a middleware before run code below 'router campground and review'
 app.use((req,res,next)=>{
-    console.log(req.session)
+    // console.log(req.session)
     // REMEMBER! these variables is used in Views file
     res.locals.currentUser = req.user
     res.locals.message = req.flash('success') // when we use message variable, it is understood that req.flash('success')

@@ -1,0 +1,41 @@
+body{
+    height: 100vh;
+    background-image: linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),url("https://res.cloudinary.com/tramtran0497/image/upload/v1630074786/Yelp-Camp/wmprwvjoeyrqxsx8seu8.jpg");
+    background-size: cover;
+    background-position: center;
+    text-shadow: 0 0 0.5rem 0.1rem rgb(0, 0, 0.5);
+    box-shadow:0 0 0.5rem 0.1rem rgb(0, 0, 0.5); ;
+}
+
+.cover-container{
+    max-width: 80vw;
+}
+
+.nav-link{
+    color: white;
+    font-weight: 700 ;
+    padding: 0.25rem 0;
+    margin-left: 1rem;
+    border-bottom: 3px solid transparent;
+}
+
+.nav-link:hover{
+    border-bottom-color: rgb(206, 130, 59) ;
+    color: rgb(206, 130, 59);
+}
+
+.nav-link.active{
+    border-bottom-color: white;
+    color: white;
+}
+
+.btn-secondary{
+    text-shadow: none;
+    color:rgb(187, 144, 42);
+    background-color: #fff;
+}
+
+.btn-secondary:hover{
+    color: seashell;
+    background-color:rgb(207, 157, 47);
+}

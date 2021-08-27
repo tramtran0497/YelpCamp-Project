@@ -4,7 +4,7 @@
         <h1 class="text-center">
             Update Campgrounds
         </h1>
-        <div class="col-6 offset-3">
+        <div class="col-md-6 offset-md-3">
             <!-- if having no ?_method=PUT, it only changes your edition tempoprary and back to the previous page -->
             <form action="/campgrounds/<%=campground._id%>?_method=PUT" method="POST" class='validated-form' novalidate enctype="multipart/form-data">
                 <div class="mb-3">
@@ -50,9 +50,7 @@
                     <button class="btn btn-info">Update a campground
                     </button>
                 </div>
-                <div class="mb-3">
-                    <a href="/campgrounds/<%=campground._id%> ">Back to the campground</a>
-                </div>
+                
             </form>
         </div>
     </div>

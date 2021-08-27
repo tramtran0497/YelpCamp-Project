@@ -6,6 +6,9 @@
   center: campground.geometry.coordinates, // starting position [lng, lat]
   zoom: 9 // starting zoom
   });
+
+  // Add zoom and rotation controls to the map.
+  map.addControl(new mapboxgl.NavigationControl());
 // makinf a pinpoint
   const marker2 = new mapboxgl.Marker({ color: '#f28579', anchor: 'bottom'})
     .setLngLat(campground.geometry.coordinates)

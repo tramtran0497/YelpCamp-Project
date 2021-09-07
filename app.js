@@ -29,10 +29,12 @@ const reviews = require('./Routes/review')
 const users = require('./Routes/user')
 // requires the model with Passport-Local Mongoose plugged in
 const User = require('./models/user')
-
-
+const MongoStore = require('connect-mongo');
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet')
+const dbUrl = process.env.DB_URL || 'mongodb://localhost:27017/yelp-camp'
 // const {error} = require('console')
-mongoose.connect('mongodb://localhost:27017/yelp-camp', {
+mongoose.connect(dbUrl, {
     useNewUrlParser: true,
     useCreateIndex: true,
     useUnifiedTopology: true,
@@ -80,20 +82,98 @@ app.set('views', path.join(__dirname, 'view'))
 app.use(express.urlencoded({
     extended: true
 }))
+
+// To remove data, use:
+app.use(mongoSanitize({
+    replaceWith: '_',
+  }));
+
+// const scriptSrcUrls = [
+//     "https://stackpath.bootstrapcdn.com/",
+//     "https://api.tiles.mapbox.com/",
+//     "https://api.mapbox.com/",
+//     "https://kit-free.fontawesome.com/",
+//     // "https://code.jquery.com/",
+//     "https://cdnjs.clouflare.com/",
+//     "https://cdn.jsdelivr.net"
+// ]
+
+// const styleSrcUrls = [
+//     "https://kit-free.fontawesome.com/",
+//     "https://stackpath.bootstrapcdn.com/",
+//     "https://api.mapbox.com/",
+//     "https://api.tiles.mapbox.com/",
+//     "https://fonts.googleapis.com/",
+//     "https://use.fontawesome.com/"
+// ]
+
+// const connectSrcUrls = [
+//     "https://api.mapbox.com./",
+//     "https://a.tiles.mapbox.com/",
+//     "https://b.tiles.mapbox.com/",
+//     "https://events.mapbox.com/"
+// ]
+
+// const fontSrcUrls = []
+
+app.use(helmet({
+    contentSecurityPolicy: false
+      // This disables the `contentSecurityPolicy` middleware but keeps the rest. because this helmet do not allow some links.
+//     contentSecurityPolicy: {
+//         directives:{
+//             defaultSrc:[],
+//             connectSrc: ["'self'",...connectSrcUrls],
+//             scriptSrc: ["'unsafe-inline'","'self'",...scriptSrcUrls],
+//             styleSrc:["'self'","'unsafe-inline'",...styleSrcUrls],
+//             workerSrc: ["'self'","blob:"],
+//             objectSrc: [],
+//             imgSrc: [
+//                 "'self'",
+//                 "blob:",
+//                 "dara:",
+//                 "https://res.cloudinary.com/tramtran0497/",
+//                 "https://image/unsplash.com/"
+//             ],
+//             fontSrc: ["'self'",...fontSrcUrls],
+//         },
+//     }
+  }));
+
 // this allows you can oveerride method 
+// Or, to replace prohibited characters with _, use
 app.use(methodOverride('_method'))
 //use the following code to serve images, CSS files, and JavaScript files in a directory named public
 app.use(express.static(path.join(__dirname,'public')))
-app.use(session({
-    secret: 'thisisasecret',
+
+// const store = new MongoDBStore({
+//     url: dbUrl,
+//     secret:'thisisasecret',
+//     touchAfter: 24 * 60 * 60
+// })
+
+// store.on("error", function(e){
+//     console.log('error',e)
+// })
+const secret = process.env.SECRET || "thisisasecret"
+const sessionConfig = {
+// we change name to prevent hacker.
+    store: MongoStore.create({
+        mongoUrl: dbUrl,
+        secret,
+        touchAfter: 24 * 60 * 60
+    }),
+    name:'session',
+    secret,
     resave: false,
     saveUninitialized: true,
     cookie:{
-        httpOnly: true,
-        expires: Date.now() + 1000 * 60 * 60 * 24 * 7, 
-        maxAge : 1000 * 60 * 60 * 24 * 7 // a week
-    }
-}))
+    httpOnly: true,
+    expires: Date.now() + 1000 * 60 * 60 * 24 * 7, 
+    maxAge : 1000 * 60 * 60 * 24 * 7 // a week
+}}
+
+
+app.use(session(sessionConfig))
 app.use(flash())
 // app.use('/campgrounds', (req,res,next)=>{
 //     console.log('AAAAAAA')
@@ -115,6 +195,7 @@ passport.deserializeUser(User.deserializeUser());
 
 // made a middleware before run code below 'router campground and review'
 app.use((req,res,next)=>{
+    // console.log(req.query)
     // console.log(req.session)
     // REMEMBER! these variables is used in Views file
     res.locals.currentUser = req.user

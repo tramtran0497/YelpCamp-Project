@@ -41,6 +41,7 @@ mongoose.connect(dbUrl, {
     // mongoose complain! if any
     useFindAndModify: false
 })
+console.log("+++++++++++++++++",dbUrl)
 //short word
 const db = mongoose.connection
 db.on('error', console.error.bind(console, 'connection error'))
@@ -248,4 +249,5 @@ app.use((req, res, next, error) => {
     res.end()
 })
 // port 80 and 443 are default, so it will not appear onsearch bar or url
-app.listen(3000, () => console.log('Serving on port'))
+const port = process.env.PORT || 3000
+app.listen(port, () => console.log('Serving on port',port))
